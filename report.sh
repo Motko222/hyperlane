@@ -11,6 +11,7 @@ source config
 container=$(docker ps | grep $folder | awk '{print $NF}')
 [ $container ] && docker_status=$(docker inspect $container | jq -r .[].State.Status)
 version=$(docker ps -a --no-trunc | grep $folder | awk -F 'hyperlane-agent:agents-' '{print $2}' | awk '{print $1}')
+errors=$(journalctl -u $folder.service --since "1 day ago" --no-hostname -o cat | grep -c -E "rror|ERR")
 
 case $docker_status in
   running) status=ok; message="" ;;
@@ -35,7 +36,8 @@ cat >$json << EOF
    "message":"$message",
    "docker_status":"$docker_status",
    "name":"$NAME",
-   "version":"$version"
+   "version":"$version",
+   "errors":"$errors"
   }
 }
 EOF
